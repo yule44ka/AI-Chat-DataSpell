@@ -1,6 +1,6 @@
 # AI-Chat-DataSpell
 
-This project provides assistant that help to work with pandas dataframe.
+AI assistant that helps to work with pandas dataframe.
 
 ## Installation
 
