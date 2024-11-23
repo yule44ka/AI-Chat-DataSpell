@@ -53,7 +53,7 @@ def describe_dataframe(df: pd.DataFrame) -> str:
     )
 
 
-def generate_transformation_sequence(prompt: str, df_description: str) -> list:
+def generate_transformation_sequence(prompt: str, df_description: str) -> (list, list):
     """
     Generate a sequence of transformations using OpenAI.
     """
@@ -74,8 +74,6 @@ def generate_transformation_sequence(prompt: str, df_description: str) -> list:
                 {"role": "user", "content": prompt},
             ],
         )
-        # Log the response
-        print("Full response from OpenAI:", response)
 
         structured_output = response.choices[0].message.content.strip()
         if not structured_output:
@@ -83,16 +81,26 @@ def generate_transformation_sequence(prompt: str, df_description: str) -> list:
 
         structured_output = clean_json_response(structured_output)
 
-        # Try to decode the JSON
         try:
-            return json.loads(structured_output)
+            transformations = json.loads(structured_output)
+            # Convert transformations to a more user-friendly format
+            user_friendly_transformations = []
+            for step in transformations:
+                operation = step.get("operation")
+                params = step.get("params", {})
+                if operation == "select_columns":
+                    user_friendly_transformations.append(f"Select columns: {', '.join(params['columns'])}")
+                elif operation == "sort_data":
+                    user_friendly_transformations.append(f"Sort by {params['by']} in {'ascending' if params['ascending'] else 'descending'} order")
+            return user_friendly_transformations, transformations
         except json.JSONDecodeError as e:
             print(f"JSON decoding error: {e}")
             print(f"Response from OpenAI: {structured_output}")
-            return []
+            return [], []
     except Exception as e:
         print(f"Error while calling OpenAI: {e}")
-        return []
+        return [], []
+
 
 
 def clean_json_response(response_content: str) -> str:
@@ -117,12 +125,10 @@ def apply_transformations(df: pd.DataFrame, transformations: list) -> pd.DataFra
             operation = step.get("operation")
             params = step.get("params", {})
 
-            # Check for valid operation
             if operation not in valid_operations:
                 print(f"Step {i}: Unknown operation '{operation}', skipping.")
                 continue
 
-            # Call the corresponding method
             if operation == "select_columns":
                 transformer.select_columns(**params)
             elif operation == "sort_data":
@@ -141,7 +147,6 @@ def load_dataframe_from_file(file_path: str) -> pd.DataFrame:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    # Assuming the file is in CSV format
     return pd.read_csv(file_path)
 
 
@@ -153,37 +158,33 @@ def save_dataframe_to_file(df: pd.DataFrame, file_path: str) -> None:
     print(f"Changes saved to file: {file_path}")
 
 
-# Example usage
 if __name__ == "__main__":
-    # Request file path
     file_path = input("Enter the path to the CSV file: ")
 
-    # Load DataFrame from file
     try:
         df = load_dataframe_from_file(file_path)
     except FileNotFoundError as e:
         print(e)
         exit(1)
 
-    # Description of the current DataFrame
     df_description = describe_dataframe(df)
 
     # User inputs the transformation prompt
-    user_prompt = input("Enter a prompt for DataFrame transformation: ")
+    user_prompt = input("What transformations would you like to perform?: ")
 
     # Generate the sequence of transformations
-    transformations = generate_transformation_sequence(user_prompt, df_description)
+    user_transformations, transformations = generate_transformation_sequence(user_prompt, df_description)
 
-    if transformations:
-        print("Generated transformations:")
-        print(json.dumps(transformations, indent=4))
+    if user_transformations:
+        print("Transformations:")
+        print(*user_transformations, sep="\n", end=".\n")
 
         # User confirmation
         confirm = input("Apply these transformations? (y/n): ").strip().lower()
         if confirm == "y":
             # Apply transformations
             transformed_df = apply_transformations(df, transformations)
-            print("\nResult:")
+            print("Result:")
             print(transformed_df)
 
             # Confirmation to save changes
