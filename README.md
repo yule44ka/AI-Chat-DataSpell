@@ -1,6 +1,6 @@
-# AI-Chat-DataSpell
+# AI DataFrame Transformation Assistant
 
-AI assistant that helps to work with pandas dataframe.
+This tool allows you to apply AI-driven transformations to a pandas DataFrame using OpenAI's GPT model. The assistant helps generate and apply various transformations, such as selecting columns and sorting data, based on user input.
 
 ## Installation
 
@@ -9,30 +9,64 @@ AI assistant that helps to work with pandas dataframe.
     pip install -r requirements.txt
     ```
 
-2. Create a `.env` file and add your OpenAI API key:
+2. Create a `.env` file in the root directory and add your OpenAI API key:
     ```env
     OPENAI_API_KEY=your_openai_api_key
     ```
 
 ## Usage
 
-Run the `main.py`:
+Run the `main.py` script to start the application:
 
 ```bash
-python main.py
+    python main.py
 ```
 
-### Data Transformation
+## Functions
 
-The following functions for DataFrame processing are available:
+- **`describe_dataframe(df)`**  
+  Creates a description of the DataFrame, including its columns and the first few rows.
 
-- `filter_data(df, condition)` - Filters data based on a condition.
-- `select_columns(df, columns)` - Selects specific columns.
-- `sort_data(df, column)` - Sorts data by a column.
-- `group_and_aggregate(df, group_by, agg_column)` - Groups and aggregates data.
-- `get_top_n(df, column, n)` - Retrieves the top N rows.
-- `get_bottom_n(df, column, n)` - Retrieves the bottom N rows.
-- `get_average(df, column)` - Calculates the average of a column.
-- `get_sum(df, column)` - Calculates the sum of a column.
-- `get_max(df, column)` - Retrieves the maximum value of a column.
-- `get_min(df, column)` - Retrieves the minimum value of a column.
+
+- **`generate_transformation_sequence(prompt, df_description)`**  
+  Generates a sequence of transformations based on the user's prompt and the DataFrame description.
+
+
+- **`apply_transformations(df, transformations)`**  
+  Applies a list of transformations to the DataFrame.
+
+
+- **`load_dataframe_from_file(file_path)`**  
+  Loads a DataFrame from a CSV file.
+
+
+- **`save_dataframe_to_file(df, file_path)`**  
+  Saves the DataFrame to a CSV file.
+
+
+## Example
+
+```bash
+      Enter the path to the CSV file: data.csv
+      Enter a prompt for DataFrame transformation: Sort the data by 'age' column
+      Generated transformations:
+      [
+          {
+              "operation": "sort_data",
+              "params": {
+                  "column": "age",
+                  "ascending": true
+              }
+          }
+      ]
+      Apply these transformations? (y/n): y
+      Result:
+         name  age
+      0  Alice   22
+      1    Bob   25
+      2   Carol   30
+      Save changes to the file? (y/n): y
+      Changes saved to file: data.csv
+```
+
+
