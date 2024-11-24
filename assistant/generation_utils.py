@@ -1,46 +1,8 @@
-import os
 import json
+import os
 import pandas as pd
-from dotenv import load_dotenv
-from openai import OpenAI
-
-# Load environment variables
-load_dotenv()
-
-# Check for API key
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise ValueError("OpenAI API key not found. Check the .env file.")
-
-# Initialize OpenAI client
-client = OpenAI(api_key=api_key)
-
-
-class DataFrameTransformer:
-    """
-    Class for managing DataFrame transformations.
-    """
-
-    def __init__(self, df: pd.DataFrame):
-        self.df = df
-
-    def select_columns(self, columns: list) -> None:
-        """Select columns."""
-        try:
-            self.df = self.df[columns]
-        except Exception as e:
-            print(f"Error selecting columns: {e}")
-
-    def sort_data(self, column: str = None, by: str = None, ascending: bool = True) -> None:
-        """Sort by column."""
-        column = column or by  # Support both parameter types
-        if not column:
-            raise ValueError("The 'column' or 'by' parameter for sorting is not specified.")
-        self.df = self.df.sort_values(by=column, ascending=ascending)
-
-    def display(self, n: int = 5) -> None:
-        """Display the first n rows of the DataFrame."""
-        print(self.df.head(n))
+from data_frame_transformer import DataFrameTransformer
+from config import client
 
 
 def describe_dataframe(df: pd.DataFrame) -> str:
@@ -53,7 +15,7 @@ def describe_dataframe(df: pd.DataFrame) -> str:
     )
 
 
-def generate_transformation_sequence(prompt: str, df_description: str) -> (list, list):
+def generate_transformation_sequence(prompt: str, df_description: str):
     """
     Generate a sequence of transformations using OpenAI.
     """
@@ -64,11 +26,11 @@ def generate_transformation_sequence(prompt: str, df_description: str) -> (list,
                 {
                     "role": "system",
                     "content": (
-                        "You are a helpful assistant that generates structured transformations for a pandas dataframe. "
-                        "Always respond in JSON format with a list of transformations. Each transformation must have the following structure: "
-                        "{'operation': 'operation_name', 'params': {'param1': value1, 'param2': value2, ...}}. "
-                        "The available operations are: select_columns, sort_data. "
-                        "Here is the description of the current DataFrame:\n" + df_description
+                            "You are a helpful assistant that generates structured transformations for a pandas dataframe. "
+                            "Always respond in JSON format with a list of transformations. Each transformation must have the following structure: "
+                            "{'operation': 'operation_name', 'params': {'param1': value1, 'param2': value2, ...}}. "
+                            "The available operations are: select_columns, sort_data. "
+                            "Here is the description of the current DataFrame:\n" + df_description
                     ),
                 },
                 {"role": "user", "content": prompt},
@@ -91,7 +53,8 @@ def generate_transformation_sequence(prompt: str, df_description: str) -> (list,
                 if operation == "select_columns":
                     user_friendly_transformations.append(f"Select columns: {', '.join(params['columns'])}")
                 elif operation == "sort_data":
-                    user_friendly_transformations.append(f"Sort by {params['by']} in {'ascending' if params['ascending'] else 'descending'} order")
+                    user_friendly_transformations.append(
+                        f"Sort by {params['by']} in {'ascending' if params['ascending'] else 'descending'} order")
             return user_friendly_transformations, transformations
         except json.JSONDecodeError as e:
             print(f"JSON decoding error: {e}")
@@ -100,7 +63,6 @@ def generate_transformation_sequence(prompt: str, df_description: str) -> (list,
     except Exception as e:
         print(f"Error while calling OpenAI: {e}")
         return [], []
-
 
 
 def clean_json_response(response_content: str) -> str:
@@ -156,44 +118,3 @@ def save_dataframe_to_file(df: pd.DataFrame, file_path: str) -> None:
     """
     df.to_csv(file_path, index=False)
     print(f"Changes saved to file: {file_path}")
-
-
-if __name__ == "__main__":
-    file_path = input("Enter the path to the CSV file: ")
-
-    try:
-        df = load_dataframe_from_file(file_path)
-    except FileNotFoundError as e:
-        print(e)
-        exit(1)
-
-    df_description = describe_dataframe(df)
-
-    # User inputs the transformation prompt
-    user_prompt = input("What transformations would you like to perform?: ")
-
-    # Generate the sequence of transformations
-    user_transformations, transformations = generate_transformation_sequence(user_prompt, df_description)
-
-    if user_transformations:
-        print("Transformations:")
-        print(*user_transformations, sep="\n", end=".\n")
-
-        # User confirmation
-        confirm = input("Apply these transformations? (y/n): ").strip().lower()
-        if confirm == "y":
-            # Apply transformations
-            transformed_df = apply_transformations(df, transformations)
-            print("Result:")
-            print(transformed_df)
-
-            # Confirmation to save changes
-            save_confirm = input("Save changes to the file? (y/n): ").strip().lower()
-            if save_confirm == "y":
-                save_dataframe_to_file(transformed_df, file_path)  # Save to original file
-            else:
-                print("Changes not saved.")
-        else:
-            print("Transformations canceled.")
-    else:
-        print("Failed to generate transformations.")

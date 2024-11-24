@@ -2,18 +2,28 @@
 
 This tool allows you to apply AI-driven transformations to a pandas DataFrame using OpenAI's GPT model. The assistant helps generate and apply various transformations, such as selecting columns and sorting data, based on user input.
 
-## Installation
+## Features
+- Load and save DataFrames from/to CSV files.
+- Describe the structure of a DataFrame.
+- Generate transformation sequences based on user prompts using OpenAI GPT-4.
+- Apply transformations like selecting columns and sorting data.
+- Simple command-line interface for ease of use.
+A
+## Setup and run
 
-1. Install the necessary dependencies:
+1. Go to the directory `assisatnt`:
     ```bash
-    pip install -r requirements.txt
-    ```
-
-2. Create a `.env` file in the root directory and add your OpenAI API key:
-    ```env
-    OPENAI_API_KEY=your_openai_api_key
-    ```
-
+      cd assistant
+      ```
+2. Setup:
+   ```bash
+   ./setup.sh
+   ```
+3. Run:
+    ```bash
+   ./run.sh
+   ```
+Example of dataframe is `ex.csv`.
 ## Usage
 
 - Run the `main.py` script to start the application:
